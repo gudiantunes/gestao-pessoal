@@ -1,0 +1,1095 @@
+:root {
+  --bg: #EDEFEC;
+  --surface: #FAFBF9;
+  --surface2: #E1E5DF;
+  --ink: #171B19;
+  --muted: #59625C;
+  --line: #CBD1C9;
+  --accent: #F0AB10;
+  --accent-ink: #1A1405;
+  --danger: #B3261E;
+  --ok: #1B6E45;
+  --tint-s: 55%;
+  --tint-l: 88%;
+  --tint-fg-l: 24%;
+  --f-ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141715;
+    --surface: #1D211F;
+    --surface2: #272C29;
+    --ink: #ECEFEA;
+    --muted: #9BA49D;
+    --line: #343B37;
+    --accent: #F2B232;
+    --accent-ink: #1A1405;
+    --danger: #F0877F;
+    --ok: #6CCB9A;
+    --tint-s: 34%;
+    --tint-l: 24%;
+    --tint-fg-l: 84%;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141715;
+  --surface: #1D211F;
+  --surface2: #272C29;
+  --ink: #ECEFEA;
+  --muted: #9BA49D;
+  --line: #343B37;
+  --accent: #F2B232;
+  --accent-ink: #1A1405;
+  --danger: #F0877F;
+  --ok: #6CCB9A;
+  --tint-s: 34%;
+  --tint-l: 24%;
+  --tint-fg-l: 84%;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.4 var(--f-ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 110px;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg);
+  z-index: 10;
+}
+
+body.lock {
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+input, select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+h1, h2 {
+  margin: 0;
+  font-family: var(--f-ui);
+  font-stretch: 78%;
+  font-weight: 800;
+  letter-spacing: .01em;
+  text-wrap: balance;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.pad {
+  padding: 24px 4px;
+}
+
+/* ==========================================================================
+   2. BARRA SUPERIOR & NAVEGAÇÃO (MOBILE BASE)
+   ========================================================================== */
+.top {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+}
+
+/* Escondidos por padrão no mobile */
+.brand,
+.sync {
+  display: none;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none;
+  padding-block: 2px;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.chip.on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.chip.add {
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 15px;
+  border-style: dashed;
+  background: transparent;
+}
+
+.chip svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.sync {
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.sync::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.sync[data-k="cloud"]::before {
+  background: var(--ok);
+}
+
+.sync[data-k="local"]::before {
+  background: var(--accent);
+}
+
+.ico {
+  font-style: normal;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 15px;
+  line-height: 1;
+  background: hsl(var(--h,40) var(--tint-s) var(--tint-l));
+  flex: none;
+}
+
+.chip.on .ico {
+  background: transparent;
+}
+
+.ico.lg {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 23px;
+}
+
+/* ==========================================================================
+   3. TELA DE INÍCIO & FERRAMENTAS (MOBILE BASE)
+   ========================================================================== */
+.home {
+  padding-top: 26px;
+}
+
+.home .h {
+  font-size: 34px;
+  margin-bottom: 6px;
+}
+
+.home .sub {
+  margin: 0 0 22px;
+  color: var(--muted);
+  max-width: 56ch;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  min-height: 132px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+}
+
+.tile b {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.tile small {
+  color: var(--muted);
+  margin-top: auto;
+}
+
+.tile:hover {
+  border-color: var(--ink);
+}
+
+.tile.new {
+  border-style: dashed;
+  background: transparent;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: var(--muted);
+}
+
+.tile.new .plus {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.tplcards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.tplcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+}
+
+.tplcard:hover {
+  border-color: var(--ink);
+}
+
+.tplcard b {
+  font-size: 17px;
+}
+
+.tplcard small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   4. FERRAMENTA, ABAS E RESUMOS (MOBILE BASE)
+   ========================================================================== */
+.toolhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.toolhead h1 {
+  font-size: 30px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ghost {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 9px;
+  color: var(--muted);
+}
+
+.ghost:hover {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.ghost svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-top: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: none;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tab.on {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.tab.add {
+  font-weight: 500;
+}
+
+.tabgear {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 8px;
+  margin-left: -8px;
+  margin-right: 4px;
+}
+
+.tabgear svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-block: 14px 12px;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.search input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.btn {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  border-color: var(--ink);
+}
+
+.btn.pri {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn.pri:hover {
+  border-color: var(--ink);
+}
+
+.btn.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
+
+/* Botões exclusivos do desktop ficam ocultos por padrão no mobile */
+.desk {
+  display: none;
+}
+
+.sumrow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 12px;
+}
+
+.sumchip {
+  flex: none;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.sumchip small {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.sumchip b {
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   5. CARTÕES E BOTÃO FLUTUANTE (MOBILE BASE)
+   ========================================================================== */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 12px;
+}
+
+.ct {
+  font-weight: 700;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.kvs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 6px;
+}
+
+.kv {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kv small {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.kv b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.kv b.num {
+  font-family: var(--f-mono);
+  font-weight: 500;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: hsl(150 var(--tint-s) var(--tint-l));
+  color: hsl(150 40% var(--tint-fg-l));
+  align-self: flex-end;
+}
+
+.fab {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 32px;
+  line-height: 1;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  z-index: 6;
+}
+
+/* ==========================================================================
+   6. TABELA (ESTILOS BASE - APLICADOS QUANDO EXIBIDA)
+   ========================================================================== */
+.gridwrap {
+  overflow: auto;
+  max-height: calc(100dvh - 270px);
+  min-height: 140px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+table.grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+}
+
+.grid th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface2);
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.grid th.rn, .grid th.x {
+  cursor: default;
+  padding: 0;
+}
+
+.grid td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding: 0;
+  vertical-align: middle;
+}
+
+.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grid td.rn {
+  width: 42px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  background: var(--surface2);
+}
+
+.grid td.x, .grid th.x {
+  width: 40px;
+  border-right: 0;
+}
+
+.grid td input:not([type=checkbox]), .grid td select {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  background: transparent;
+  padding: 0 10px;
+  border-radius: 0;
+}
+
+.grid td input:focus, .grid td select:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  background: var(--bg);
+}
+
+.grid td.t-text { min-width: 160px; }
+.grid td.t-number { min-width: 96px; }
+.grid td.t-money, .grid td.t-formula { min-width: 118px; }
+.grid td.t-date { min-width: 136px; }
+.grid td.t-time { min-width: 96px; }
+.grid td.t-check { width: 64px; min-width: 64px; text-align: center; }
+.grid td.t-select { min-width: 140px; }
+
+.grid .num, .grid .fx {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.grid input[type=date], .grid input[type=time] {
+  font-family: var(--f-mono);
+  font-size: 13.5px;
+}
+
+.fx {
+  display: block;
+  padding: 0 10px;
+  line-height: 42px;
+  color: var(--muted);
+}
+
+.chkcell {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  cursor: pointer;
+}
+
+.chkcell input, .field.chk input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink);
+}
+
+.rx {
+  width: 40px;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.rx:hover {
+  color: var(--danger);
+}
+
+.grid tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface2);
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+  white-space: nowrap;
+}
+
+.grid tfoot td.tot {
+  text-align: right;
+}
+
+.grid tfoot small {
+  display: block;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.grid tfoot b {
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.empty b {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.empty p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   7. JANELAS MODAIS & FORMULÁRIOS (MOBILE BASE - BOTTOM SHEET)
+   ========================================================================== */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(10, 12, 11, .52);
+  display: flex;
+  align-items: flex-end; /* Abre no estilo bottom sheet */
+  justify-content: center;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px 18px 0 0;
+  padding: 20px max(18px, env(safe-area-inset-left, 0px)) calc(18px + env(safe-area-inset-bottom, 0px));
+}
+
+.sheet.wide {
+  max-width: 720px;
+}
+
+.sheet h2 {
+  font-size: 24px;
+  margin-bottom: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+.field > span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field input:not([type=checkbox]):not([type=radio]), .field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.field.chk {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+}
+
+.field.chk > span {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.field small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.actions .sp {
+  flex: 1;
+}
+
+.icons, .swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pickb {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 21px;
+  line-height: 1;
+}
+
+.pickb.on {
+  border: 2px solid var(--ink);
+  background: var(--surface2);
+}
+
+.sw {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: hsl(var(--h) var(--tint-s) var(--tint-l));
+}
+
+.sw.on {
+  border: 2px solid var(--ink);
+}
+
+.tplgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tpl {
+  display: block;
+  position: relative;
+  cursor: pointer;
+}
+
+.tpl input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+}
+
+.tpl-in {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+  height: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.tpl-in small {
+  color: var(--muted);
+  line-height: 1.3;
+  font-size: 12.5px;
+}
+
+.tpl input:checked + .tpl-in {
+  border: 2px solid var(--ink);
+  padding: 11px;
+}
+
+.tpl input:focus-visible + .tpl-in {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.crow {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crow input, .crow select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.crow-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.crow-foot {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.crow-foot select {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+.crow-foot button {
+  min-height: 42px;
+  min-width: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+.crow-foot .dt {
+  color: var(--danger);
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: -2px 0 0;
+}
+
+/* ==========================================================================
+   8. NOTIFICAÇÕES (TOAST - MOBILE BASE)
+   ========================================================================== */
+#toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100% - 32px);
+  padding: 11px 16px;
+  border-radius: 11px;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+#toast.on {
+  display: flex;
+}
+
+#toast button {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 800;
+  padding: 4px 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chip, .tile, .btn, .tplcard { transition: border-color .12s; }
+}
+
+/* ==========================================================================
+   9. MEDIA QUERIES (MELHORIA PROGRESSIVA PARA TABLET E DESKTOP)
+   ========================================================================== */
+
+/* Ajustes progressivos para telas a partir de 721px (Desktop/Tablet) */
+@media (min-width: 721px) {
+  .desk {
+    display: inline-block;
+  }
+
+  .fab {
+    display: none;
+  }
+
+  .scrim {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .sheet {
+    border-radius: 16px;
+    padding-bottom: 20px;
+  }
+
+  #toast {
+    bottom: 28px;
+  }
+}
+
+/* Ajustes progressivos para marca e status de sincronização (>= 760px) */
+@media (min-width: 760px) {
+  .brand {
+    display: block;
+  }
+
+  .sync {
+    display: flex;
+  }
+}
