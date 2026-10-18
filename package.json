@@ -1,0 +1,27 @@
+{
+  "name": "gestao-pessoal",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vide build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gudiantunes/gestao-pessoal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gudiantunes/gestao-pessoal/issues"
+  },
+  "homepage": "https://github.com/gudiantunes/gestao-pessoal#readme",
+  "devDependencies": {
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0"
+  }
+}
