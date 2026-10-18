@@ -1,14 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
   <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#EDEFEC" />
     <title>Rota Oficina</title>
-    <link rel="stylesheet" href="/src/style.css"/>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
   </head>
   <body>
-    <script type="module" src="src/app.js"></script>
-  </body>
+    <div id="app">
+      <main id="main"><p class="muted pad">Carregando…</p></main>
+      <header class="bottom">
+        <span class="brand">Rota Oficina</span>
+        <nav class="chips" id="nav" aria-label="Ferramentas"></nav>
+        <span class="sync" id="sync"></span>
+      </header>
+    </div>
+    <div id="layer"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
 
+    <script type="module" src="/src/app.js"></script>
+  </body>
 </html>
