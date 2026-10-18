@@ -4,8 +4,11 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="Viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu Painel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#EDEFEC">
+  <title>Rota Oficina</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +19,7 @@
   <div id="app">
     <main id="main"><p class="muted pad">Carregando…</p></main>
     <header class="bottom">
-      <span class="brand">Meu Painel</span>
+      <span class="brand">Rota Oficina</span>
       <nav class="chips" id="nav" aria-label="Ferramentas"></nav>
       <span class="sync" id="sync"></span>
     </header>
@@ -26,5 +29,14 @@
   <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(error => {
+          console.error("Falha ao registrar o service worker:", error);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
