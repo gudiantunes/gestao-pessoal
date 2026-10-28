@@ -24,8 +24,26 @@ function getSort(tabId) {
   }
 }
 
+function sourceToolName(row) {
+  const sourceLink = row.sourceLink;
+  if (!sourceLink) return '';
+  return (
+    state.tools?.find((tool) => tool.id === sourceLink.sourceToolId)?.name ||
+    sourceLink.sourceToolName ||
+    ''
+  );
+}
+
 function cellHTML(column, row, tab) {
   const value = cellVal(column, row, tab);
+  const linked = row.linkedColumns?.[column.id];
+  if (linked?.live) {
+    return (
+      '<td class="t-linked"><div class="linked-value">' +
+      esc(dispText(column, row, tab) || '—') +
+      '</div></td>'
+    );
+  }
   const data =
     ' data-col="' + esc(column.id) + '" aria-label="' + esc(column.name) + '"';
   switch (column.type) {
@@ -118,18 +136,24 @@ function tableHTML(tab, rows) {
     )
     .join('');
   const body = rows
-    .map(
-      (row, index) =>
+    .map((row, index) => {
+      const sourceName = sourceToolName(row);
+      return (
         '<tr data-id="' +
         esc(row.id) +
-        '"><td class="rn">' +
+        '"><td class="rn"><span>' +
         (index + 1) +
+        '</span>' +
+        (sourceName
+          ? '<small class="row-origin">Origem: ' + esc(sourceName) + '</small>'
+          : '') +
         '</td>' +
         tab.cols.map((column) => cellHTML(column, row, tab)).join('') +
         '<td class="x"><button class="rx" data-act="delrow" data-id="' +
         esc(row.id) +
-        '" aria-label="Excluir linha">×</button></td></tr>',
-    )
+        '" aria-label="Excluir linha">×</button></td></tr>'
+      );
+    })
     .join('');
   const foot = tab.cols.some((column) => column.total)
     ? '<tfoot><tr><td class="rn"></td>' +
@@ -165,13 +189,19 @@ function cardsHTML(tab, rows) {
     rows
       .map((row) => {
         const title = titleColumn ? dispText(titleColumn, row, tab) : '';
+        const sourceName = sourceToolName(row);
         const rest = tab.cols
           .filter((column) => column !== titleColumn)
           .map((column) => {
             const display = dispText(column, row, tab);
-            if (!display) return '';
+            const origin = row.linkedColumns?.[column.id];
+            if (!display && !origin) return '';
             if (column.type === 'check')
-              return '<span class="pill">✓ ' + esc(column.name) + '</span>';
+              return (
+                '<span class="pill">' +
+                (display ? '✓ ' + esc(column.name) : esc(column.name)) +
+                '</span>'
+              );
             return (
               '<span class="kv"><small>' +
               esc(column.name) +
@@ -188,7 +218,13 @@ function cardsHTML(tab, rows) {
           esc(row.id) +
           '"><div class="ct">' +
           esc(title || 'Sem título') +
-          '</div><div class="kvs">' +
+          '</div>' +
+          (sourceName
+            ? '<small class="row-origin">Origem: ' +
+              esc(sourceName) +
+              '</small>'
+            : '') +
+          '<div class="kvs">' +
           rest +
           '</div></button>'
         );

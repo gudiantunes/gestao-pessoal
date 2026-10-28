@@ -18,6 +18,7 @@ import {
   isNumeric,
 } from '../utils.js';
 import { readCellInput } from './grid.js';
+import { syncLinkedRows } from '../links/engine.js';
 
 let columnModel = null;
 
@@ -237,9 +238,10 @@ export function openColumnsModal() {
   drawColumns();
 }
 
-function fieldHTML(column, value, first) {
+function fieldHTML(column, value, first, origin) {
   const id = 'f_' + column.id;
   const firstAttribute = first ? ' data-first' : '';
+  const locked = origin?.live ? ' disabled' : '';
   const label = '<span>' + esc(column.name) + '</span>';
   switch (column.type) {
     case 'check':
@@ -249,6 +251,7 @@ function fieldHTML(column, value, first) {
         '" data-col="' +
         esc(column.id) +
         '"' +
+        locked +
         (value ? ' checked' : '') +
         '>' +
         label +
@@ -264,7 +267,9 @@ function fieldHTML(column, value, first) {
         esc(id) +
         '" data-col="' +
         esc(column.id) +
-        '"><option value=""></option>' +
+        '"' +
+        locked +
+        '><option value=""></option>' +
         options
           .map(
             (option) =>
@@ -277,7 +282,8 @@ function fieldHTML(column, value, first) {
               '</option>',
           )
           .join('') +
-        '</select></label>'
+        '</select>' +
+        '</label>'
       );
     }
     case 'number':
@@ -295,7 +301,9 @@ function fieldHTML(column, value, first) {
         (column.type === 'money' ? '0,00' : '0') +
         '" value="' +
         esc(fmtRaw(value)) +
-        '"></label>'
+        '"' +
+        locked +
+        '></label>'
       );
     case 'date':
       return (
@@ -307,7 +315,9 @@ function fieldHTML(column, value, first) {
         esc(column.id) +
         '" value="' +
         esc(value || '') +
-        '"></label>'
+        '"' +
+        locked +
+        '></label>'
       );
     case 'time':
       return (
@@ -319,7 +329,9 @@ function fieldHTML(column, value, first) {
         esc(column.id) +
         '" value="' +
         esc(value || '') +
-        '"></label>'
+        '"' +
+        locked +
+        '></label>'
       );
     default:
       return (
@@ -333,7 +345,9 @@ function fieldHTML(column, value, first) {
         firstAttribute +
         ' value="' +
         esc(value == null ? '' : value) +
-        '"></label>'
+        '"' +
+        locked +
+        '></label>'
       );
   }
 }
@@ -347,6 +361,14 @@ export function openRowModal(rowId = null) {
   const row =
     rowId && state.rows ? state.rows.find((item) => item.id === rowId) : null;
   state.modal = { rowId: rowId || null, tabId: tab.id };
+  const sourceName =
+    state.tools?.find((item) => item.id === row?.sourceLink?.sourceToolId)
+      ?.name ||
+    row?.sourceLink?.sourceToolName ||
+    '';
+  const sourceBadge = sourceName
+    ? '<small class="row-origin">Origem: ' + esc(sourceName) + '</small>'
+    : '';
   const columns = tab.cols.filter((column) => column.type !== 'formula');
   const firstColumn = columns.find((column) =>
     ['text', 'number', 'money'].includes(column.type),
@@ -355,7 +377,12 @@ export function openRowModal(rowId = null) {
     .map((column) => {
       let value = row && row.cells ? row.cells[column.id] : null;
       if (!row && column.type === 'date') value = todayISO();
-      return fieldHTML(column, value, column === firstColumn && !row);
+      return fieldHTML(
+        column,
+        value,
+        column === firstColumn && !row,
+        row?.linkedColumns?.[column.id],
+      );
     })
     .join('');
   const deleteButton = row
@@ -365,6 +392,7 @@ export function openRowModal(rowId = null) {
     '<form data-form="row"><h2>' +
       (row ? 'Editar registro' : 'Novo registro') +
       '</h2>' +
+      sourceBadge +
       fields +
       '<div class="actions">' +
       deleteButton +
@@ -564,16 +592,50 @@ export async function handleModalSubmit(event, { safe, setView }) {
       if (element) cells[column.id] = readCellInput(column, element);
     });
     const rowId = state.modal.rowId;
+    const existingRow = rowId
+      ? state.rows?.find((item) => item.id === rowId)
+      : null;
     closeModal();
-    if (rowId) await safe(() => state.store.patchCells(tool.id, rowId, cells));
-    else
-      await safe(() =>
-        state.store.setRow(tool.id, uid(), {
+    if (rowId) {
+      const updatedCells = Object.assign({}, existingRow?.cells || {}, cells);
+      const saved = await safe(() =>
+        state.store.patchCells(tool.id, rowId, cells),
+      );
+      if (saved) {
+        await safe(() =>
+          syncLinkedRows(
+            state.store,
+            state.tools,
+            tool.id,
+            tab.id,
+            rowId,
+            updatedCells,
+            existingRow?.linkedRows || [],
+          ),
+        );
+      }
+    } else {
+      const newRowId = uid();
+      const saved = await safe(() =>
+        state.store.setRow(tool.id, newRowId, {
           tab: tab.id,
           ord: Date.now(),
           cells,
         }),
       );
+      if (saved) {
+        await safe(() =>
+          syncLinkedRows(
+            state.store,
+            state.tools,
+            tool.id,
+            tab.id,
+            newRowId,
+            cells,
+          ),
+        );
+      }
+    }
   }
 }
 

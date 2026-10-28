@@ -6,6 +6,7 @@ export function renderNavigation() {
   if (!nav) return;
   nav.innerHTML = '<button class="chip' + (state.currentView === "home" ? " on" : "") + '" data-act="home"><span>Início</span></button>' +
     (state.tools || []).map((tool) => '<button class="chip' + (state.currentView === tool.id ? " on" : "") + '" data-act="open" data-id="' + esc(tool.id) + '" style="--h:' + HUES[tool.hue || 0] + '"><i class="ico">' + esc(tool.icon || "📋") + '</i><span>' + esc(tool.name) + "</span></button>").join("") +
+    '<button class="chip' + (state.currentView === "links" ? " on" : "") + '" data-act="links"><span>Links</span></button>' +
     '<button class="chip add" data-act="newtool" aria-label="Nova ferramenta">+</button>';
 }
 

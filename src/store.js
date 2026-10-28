@@ -42,6 +42,9 @@ function createLocalStorageStore() {
       callback(rows(toolId));
       return () => rowWatchers.get(toolId).delete(callback);
     },
+    async readRows(toolId) {
+      return rows(toolId);
+    },
     async setTool(id, value) {
       data.tools[id] = clone(value);
       save();
@@ -67,6 +70,13 @@ function createLocalStorageStore() {
       const row = (data.rows[toolId] || {})[id];
       if (!row) return;
       row.cells = Object.assign(row.cells || {}, clone(cells));
+      save();
+      notifyRows(toolId);
+    },
+    async patchRow(toolId, id, value) {
+      const row = (data.rows[toolId] || {})[id];
+      if (!row) return;
+      Object.assign(row, clone(value));
       save();
       notifyRows(toolId);
     },
@@ -104,6 +114,10 @@ function createCloudStore(db, onError) {
         () => onError('Falha ao carregar os registros.'),
       );
     },
+    async readRows(toolId) {
+      const snapshot = await db.collection(`tools/${toolId}/rows`).get();
+      return docsToArray(snapshot);
+    },
     setTool: (id, value) =>
       run(`tools/${id}`, () => db.doc(`tools/${id}`).set(value)),
     patchTool: (id, value) =>
@@ -125,6 +139,10 @@ function createCloudStore(db, onError) {
     patchCells: (toolId, id, cells) =>
       run(rowPath(toolId, id), () =>
         db.doc(rowPath(toolId, id)).update({ cells }),
+      ),
+    patchRow: (toolId, id, value) =>
+      run(rowPath(toolId, id), () =>
+        db.doc(rowPath(toolId, id)).update(clone(value)),
       ),
     delRow: (toolId, id) =>
       run(rowPath(toolId, id), () => db.doc(rowPath(toolId, id)).delete()),

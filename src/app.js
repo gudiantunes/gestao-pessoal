@@ -23,9 +23,16 @@ import {
   openToolSettings,
 } from './components/modals.js';
 import { clone, fmtNum, fmtRaw, LS, todayISO, uid } from './utils.js';
+import { detachLinkedRows, syncLinkedRows } from './links/engine.js';
+import {
+  handleLinkAction,
+  handleLinkChange,
+  renderLinksPage,
+} from './links/links_editor.js';
 import './style.css';
 
 let unsubscribeRows = null;
+let deferLinkRender = false;
 const main = document.querySelector('#main');
 const layer = document.querySelector('#layer');
 const mediaQuery = window.matchMedia('(max-width: 720px)');
@@ -58,9 +65,11 @@ function toast(message, action) {
 async function safe(task) {
   try {
     await task();
+    return true;
   } catch (error) {
     console.error(error);
     toast('Não foi possível salvar. Confira a conexão e tente de novo.');
+    return false;
   }
 }
 
@@ -74,11 +83,17 @@ function editingNow() {
     active &&
     main.contains(active) &&
     active.matches &&
-    active.matches('.gridwrap input,.gridwrap select')
+    active.matches(
+      '.gridwrap input,.gridwrap select,.link-map-entry input,.link-map-entry select',
+    )
   );
 }
 
 function render() {
+  if (deferLinkRender) {
+    state.dirty = true;
+    return;
+  }
   renderNavigation();
   if (editingNow()) {
     state.dirty = true;
@@ -86,6 +101,11 @@ function render() {
   }
   if (state.currentView === 'home' || state.tools == null) {
     renderHome();
+    return;
+  }
+  if (state.currentView === 'links') {
+    state.sig = null;
+    main.innerHTML = renderLinksPage(state.tools);
     return;
   }
   const tool = currentTool();
@@ -112,7 +132,7 @@ function setView(view) {
     unsubscribeRows();
     unsubscribeRows = null;
   }
-  if (view !== 'home') {
+  if (view !== 'home' && view !== 'links') {
     unsubscribeRows = state.store.watchRows(view, (rows) => {
       if (state.currentView === view) {
         state.rows = rows;
@@ -146,9 +166,14 @@ async function addRow() {
     if (column.type === 'date') cells[column.id] = todayISO();
   });
   state.focusRow = id;
-  await safe(() =>
+  const saved = await safe(() =>
     state.store.setRow(tool.id, id, { tab: tab.id, ord: Date.now(), cells }),
   );
+  if (saved) {
+    await safe(() =>
+      syncLinkedRows(state.store, state.tools, tool.id, tab.id, id, cells),
+    );
+  }
 }
 
 async function deleteRow(id) {
@@ -156,15 +181,27 @@ async function deleteRow(id) {
   if (!tool || !state.rows) return;
   const row = state.rows.find((item) => item.id === id);
   if (!row) return;
-  const backup = {
-    tab: row.tab,
-    ord: row.ord || Date.now(),
-    cells: clone(row.cells || {}),
-  };
-  await safe(() => state.store.delRow(tool.id, id));
+  const backup = clone(row);
+  delete backup.id;
+  await safe(async () => {
+    await detachLinkedRows(state.store, state.tools, row.linkedRows || []);
+    await state.store.delRow(tool.id, id);
+  });
   toast('Registro excluído', {
     label: 'Desfazer',
-    fn: () => safe(() => state.store.setRow(tool.id, id, backup)),
+    fn: () =>
+      safe(async () => {
+        await state.store.setRow(tool.id, id, backup);
+        await syncLinkedRows(
+          state.store,
+          state.tools,
+          tool.id,
+          backup.tab,
+          id,
+          backup.cells || {},
+          backup.linkedRows || [],
+        );
+      }),
   });
 }
 
@@ -188,29 +225,40 @@ function deleteTool(button) {
   if (!tool || !state.modal || !confirmDelete(button, 'Excluir ferramenta')) {
     return;
   }
+  const sourceRows = clone(state.rows || []);
+  const tools = state.tools || [];
   closeModal();
   setView('home');
-  safe(() => state.store.delTool(tool.id)).then(() =>
-    toast('Ferramenta excluída'),
-  );
+  safe(async () => {
+    for (const row of sourceRows) {
+      await detachLinkedRows(state.store, tools, row.linkedRows || []);
+    }
+    await state.store.delTool(tool.id);
+  }).then(() => toast('Ferramenta excluída'));
 }
 
 function deleteTab(button) {
   const tool = currentTool();
   if (!tool || !state.modal || !confirmDelete(button, 'Excluir aba')) return;
   const tab = currentTab(tool);
-  const rowIds = (state.rows || [])
-    .filter((row) => row.tab === tab.id)
-    .map((row) => row.id);
+  const deletedRows = (state.rows || []).filter((row) => row.tab === tab.id);
+  const rowIds = deletedRows.map((row) => row.id);
   const tabs = tool.tabs.filter((item) => item.id !== tab.id);
   closeModal();
   safe(async () => {
+    for (const row of deletedRows) {
+      await detachLinkedRows(
+        state.store,
+        state.tools || [],
+        row.linkedRows || [],
+      );
+    }
     await state.store.patchTool(tool.id, { tabs: clone(tabs) });
     for (const id of rowIds) await state.store.delRow(tool.id, id);
   }).then(() => toast('Aba excluída'));
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-act]');
   if (
     !button ||
@@ -222,9 +270,30 @@ document.addEventListener('click', (event) => {
   const tool = currentTool();
 
   if (handleModalAction(action, button)) return;
+  if (action.startsWith('link-')) {
+    deferLinkRender = true;
+    let handled;
+    try {
+      handled = await handleLinkAction(action, button, {
+        safe,
+        store: state.store,
+        tools: state.tools || [],
+      });
+    } finally {
+      deferLinkRender = false;
+    }
+    if (handled) {
+      state.dirty = false;
+      render();
+      return;
+    }
+  }
   switch (action) {
     case 'home':
       setView('home');
+      break;
+    case 'links':
+      setView('links');
       break;
     case 'open':
       setView(button.dataset.id);
@@ -293,7 +362,22 @@ layer.addEventListener('submit', (event) =>
   handleModalSubmit(event, { safe, setView }),
 );
 
-main.addEventListener('change', (event) => {
+main.addEventListener('change', async (event) => {
+  if (event.target.dataset.linkId) {
+    deferLinkRender = true;
+    try {
+      await handleLinkChange(event, {
+        safe,
+        store: state.store,
+        tools: state.tools || [],
+      });
+    } finally {
+      deferLinkRender = false;
+      state.dirty = false;
+      render();
+    }
+    return;
+  }
   const element = event.target;
   const rowElement = element.closest && element.closest('tr[data-id]');
   if (!rowElement || !element.dataset.col) return;
@@ -304,11 +388,27 @@ main.addEventListener('change', (event) => {
   );
   if (!column) return;
   const value = readCellInput(column, element);
-  safe(() =>
-    state.store.patchCells(tool.id, rowElement.dataset.id, {
+  const rowId = rowElement.dataset.id;
+  const row = (state.rows || []).find((item) => item.id === rowId);
+  const cells = Object.assign({}, row?.cells || {}, { [column.id]: value });
+  const saved = await safe(() =>
+    state.store.patchCells(tool.id, rowId, {
       [column.id]: value,
     }),
   );
+  if (saved && row) {
+    await safe(() =>
+      syncLinkedRows(
+        state.store,
+        state.tools,
+        tool.id,
+        currentTab(tool).id,
+        rowId,
+        cells,
+        row.linkedRows || [],
+      ),
+    );
+  }
   if (
     ['number', 'money'].includes(column.type) &&
     document.activeElement !== element
@@ -387,13 +487,17 @@ function init() {
     if (!state.initialized) {
       state.initialized = true;
       const savedView = LS.get('mp.view');
-      if (savedView && tools.some((tool) => tool.id === savedView)) {
+      if (
+        savedView === 'links' ||
+        (savedView && tools.some((tool) => tool.id === savedView))
+      ) {
         setView(savedView);
         return;
       }
     }
     if (
       state.currentView !== 'home' &&
+      state.currentView !== 'links' &&
       !tools.some((tool) => tool.id === state.currentView) &&
       state.known.has(state.currentView)
     ) {
